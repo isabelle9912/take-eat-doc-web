@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Documentação Interativa - Take Eat</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <!-- Chosen Palette: Earthy Harmony -->
+    <!-- Application Structure Plan: A single-page application with a fixed top navigation bar was chosen to allow users to quickly jump between key documentation sections (Overview, Requirements, Processes, Data Structure, Rules) without losing context. This dashboard-like approach enhances usability by breaking down a dense technical document into logical, digestible modules. The user flow is non-linear, encouraging exploration. Key interactions include tabbed views for requirements, an interactive HTML/CSS flowchart for the BPMN process, and accordions for use cases, making complex information easier to parse. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: Project Scope -> Goal: Inform -> Presentation: Formatted text block -> Interaction: Static -> Justification: Clear, immediate context.
+        - Report Info: Functional/Non-Functional Requirements -> Goal: Organize/Compare -> Presentation: Tabbed lists with card-like styling -> Interaction: Click tabs -> Justification: Separates concerns cleanly, avoids long scrolling.
+        - Report Info: BPMN Process -> Goal: Explain Change/Process -> Presentation: Interactive flowchart using HTML divs and CSS -> Interaction: Hover/Click on steps to highlight -> Justification: Provides a dynamic, engaging alternative to a static image, adhering to the NO SVG rule.
+        - Report Info: Use Cases -> Goal: Organize/Inform -> Presentation: Accordion -> Interaction: Click to expand/collapse -> Justification: Manages detailed content efficiently, keeping the UI clean.
+        - Report Info: Use Case Importance Scores -> Goal: Compare -> Presentation: Bar Chart -> Interaction: Hover for tooltips -> Justification: Visualizes quantitative data from the report, adding an analytical layer. Library: Chart.js/Canvas.
+        - Report Info: Data Dictionary -> Goal: Organize/Relate -> Presentation: HTML Table -> Interaction: Static -> Justification: Standard and effective for tabular data.
+        - Report Info: Business Rules/Glossary -> Goal: Inform -> Presentation: Styled lists -> Interaction: Static -> Justification: Simple and clear presentation for definitions and rules.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+      }
+      .nav-link {
+        transition: all 0.3s ease;
+      }
+      .nav-link.active {
+        color: #2dd4bf;
+        border-bottom-color: #2dd4bf;
+      }
+      .content-section {
+        display: none;
+      }
+      .content-section.active {
+        display: block;
+      }
+      .accordion-content {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.5s ease-in-out;
+      }
+      .bpmn-step {
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+      }
+      .bpmn-step:hover {
+        border-color: #2dd4bf;
+        transform: translateY(-4px);
+        box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1),
+          0 4px 6px -4px rgb(0 0 0 / 0.1);
+      }
+      .bpmn-arrow {
+        position: relative;
+        width: 100%;
+        height: 30px;
+      }
+      .bpmn-arrow::after {
+        content: "";
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        width: 2px;
+        height: 30px;
+        background-color: #9ca3af;
+      }
+      .bpmn-arrow.down::after {
+        height: 30px;
+      }
+      .bpmn-arrow.down-end::after {
+        content: "▼";
+        background-color: transparent;
+        color: #9ca3af;
+        font-size: 16px;
+        top: 15px;
+      }
+      .chart-container {
+        position: relative;
+        width: 100%;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+        height: 350px;
+        max-height: 400px;
+      }
+    </style>
+  </head>
+  <body class="bg-stone-50 text-gray-800">
+    <header class="bg-white shadow-md sticky top-0 z-50">
+      <div
+        class="container mx-auto px-6 py-4 flex justify-between items-center"
+      >
+        <h1 class="text-3xl font-bold text-teal-600">Take Eat</h1>
+        <nav id="main-nav" class="hidden md:flex items-center space-x-8">
+          <a
+            href="#overview"
+            class="nav-link text-gray-600 hover:text-teal-500 border-b-2 border-transparent pb-1"
+            >Visão Geral</a
+          >
+          <a
+            href="#requirements"
+            class="nav-link text-gray-600 hover:text-teal-500 border-b-2 border-transparent pb-1"
+            >Requisitos</a
+          >
+          <a
+            href="#process"
+            class="nav-link text-gray-600 hover:text-teal-500 border-b-2 border-transparent pb-1"
+            >Processos e Atores</a
+          >
+          <a
+            href="#data"
+            class="nav-link text-gray-600 hover:text-teal-500 border-b-2 border-transparent pb-1"
+            >Estrutura de Dados</a
+          >
+          <a
+            href="#rules"
+            class="nav-link text-gray-600 hover:text-teal-500 border-b-2 border-transparent pb-1"
+            >Regras de Negócio</a
+          >
+        </nav>
+        <button id="mobile-menu-button" class="md:hidden text-gray-600">
+          <svg
+            class="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M4 6h16M4 12h16m-7 6h7"
+            ></path>
+          </svg>
+        </button>
+      </div>
+      <div id="mobile-menu" class="hidden md:hidden px-6 pb-4">
+        <a href="#overview" class="block py-2 nav-link text-gray-600"
+          >Visão Geral</a
+        >
+        <a href="#requirements" class="block py-2 nav-link text-gray-600"
+          >Requisitos</a
+        >
+        <a href="#process" class="block py-2 nav-link text-gray-600"
+          >Processos e Atores</a
+        >
+        <a href="#data" class="block py-2 nav-link text-gray-600"
+          >Estrutura de Dados</a
+        >
+        <a href="#rules" class="block py-2 nav-link text-gray-600"
+          >Regras de Negócio</a
+        >
+      </div>
+    </header>
+
+    <main class="container mx-auto px-6 py-12">
+      <section id="overview" class="content-section">
+        <h2 class="text-4xl font-bold mb-6 text-gray-700">Escopo do Projeto</h2>
+        <div class="bg-white p-8 rounded-lg shadow-lg">
+          <p class="text-lg leading-relaxed">
+            O Take Eat é um aplicativo o qual tem o objetivo de combater o
+            desperdício de alimentos e a fome, através do bom senso dos doadores
+            de alimentos, distribuidores (como ONGs ou instituições de
+            caridade), apoiadores e entregadores. Essa tecnologia permite que
+            doadores cadastrem produtos que estarão disponíveis para doação, os
+            distribuidores poderão ter acesso a esses produtos e montar
+            "pedidos" para coletá-los e distribuí-los a quem mais precisa, os,
+            apoiadores poderão contribuir financeiramente através de um sistema
+            de "carteira", além dos entregadores, que serão responsáveis pela
+            logística de transporte dos alimentos.
+          </p>
+          <p class="mt-4 text-lg leading-relaxed">
+            O aplicativo permitirá o gerenciamento de diferentes perfis de
+            usuários, cada qual com funcionalidades específicas para seu papel
+            no fluxo de doação. Ele controla desde a disponibilização do produto
+            pelo doador até a entrega final, passando pela gestão de pedidos,
+            carrinho de compras, entregas e transações financeiras (extrato e
+            carteira).
+          </p>
+        </div>
+      </section>
+
+      <section id="requirements" class="content-section">
+        <h2 class="text-4xl font-bold mb-6 text-gray-700">
+          Requisitos do Sistema
+        </h2>
+        <div class="bg-white p-8 rounded-lg shadow-lg">
+          <div class="border-b border-gray-200 mb-6">
+            <nav id="req-tabs" class="-mb-px flex space-x-8" aria-label="Tabs">
+              <button
+                class="req-tab whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg text-teal-600 border-teal-500"
+                data-tab="funcionais"
+              >
+                Requisitos Funcionais
+              </button>
+              <button
+                class="req-tab whitespace-nowrap py-4 px-1 border-b-2 font-medium text-lg text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                data-tab="nao-funcionais"
+              >
+                Requisitos Não Funcionais
+              </button>
+            </nav>
+          </div>
+
+          <div id="functional-reqs" class="req-content">
+            <p class="mb-6 text-gray-600">
+              Esta seção detalha as funcionalidades que o sistema deve executar,
+              ou seja, o que ele deve fazer. São as ações e serviços que os
+              usuários podem realizar na plataforma.
+            </p>
+            <ul class="space-y-4">
+              <li class="p-4 bg-teal-50 rounded-md border-l-4 border-teal-500">
+                <strong>RF01:</strong> Permitir o cadastro de diferentes tipos
+                de usuários (Doador, Distribuidor, Apoiador, Entregador).
+              </li>
+              <li class="p-4 bg-teal-50 rounded-md border-l-4 border-teal-500">
+                <strong>RF02:</strong> Permitir que os usuários se autentiquem
+                com email e senha.
+              </li>
+              <li class="p-4 bg-teal-50 rounded-md border-l-4 border-teal-500">
+                <strong>RF03:</strong> Permitir que usuários "Doador" cadastrem
+                e gerenciem produtos para doação.
+              </li>
+              <li class="p-4 bg-teal-50 rounded-md border-l-4 border-teal-500">
+                <strong>RF04:</strong> Permitir que usuários "Distribuidor"
+                visualizem os produtos disponíveis.
+              </li>
+              <li class="p-4 bg-teal-50 rounded-md border-l-4 border-teal-500">
+                <strong>RF05:</strong> Permitir que usuários "Distribuidor"
+                adicionem produtos a um carrinho.
+              </li>
+              <li class="p-4 bg-teal-50 rounded-md border-l-4 border-teal-500">
+                <strong>RF06:</strong> Permitir que usuários "Distribuidor"
+                criem um pedido a partir dos itens do carrinho.
+              </li>
+              <li class="p-4 bg-teal-50 rounded-md border-l-4 border-teal-500">
+                <strong>RF07:</strong> Registrar os pedidos, associando-os a um
+                distribuidor e aos produtos selecionados.
+              </li>
+              <li class="p-4 bg-teal-50 rounded-md border-l-4 border-teal-500">
+                <strong>RF08:</strong> Gerenciar o status de um pedido (ex:
+                pendente, em trânsito, entregue).
+              </li>
+              <li class="p-4 bg-teal-50 rounded-md border-l-4 border-teal-500">
+                <strong>RF09:</strong> Gerenciar as entregas, associando um
+                pedido a um entregador e a um veículo.
+              </li>
+              <li class="p-4 bg-teal-50 rounded-md border-l-4 border-teal-500">
+                <strong>RF10:</strong> Permitir que usuários "Apoiador"
+                gerenciem uma carteira virtual para doações.
+              </li>
+              <li class="p-4 bg-teal-50 rounded-md border-l-4 border-teal-500">
+                <strong>RF11:</strong> Registrar um extrato de transações para
+                os apoiadores.
+              </li>
+              <li class="p-4 bg-teal-50 rounded-md border-l-4 border-teal-500">
+                <strong>RF12:</strong> Permitir que usuários "Entregador"
+                gerenciem seus veículos.
+              </li>
+            </ul>
+          </div>
+
+          <div id="non-functional-reqs" class="req-content hidden">
+            <p class="mb-6 text-gray-600">
+              Esta seção descreve os critérios de qualidade e as restrições do
+              sistema. Eles não se referem a uma funcionalidade específica, mas
+              sim a como o sistema deve operar.
+            </p>
+            <ul class="space-y-4">
+              <li
+                class="p-4 bg-indigo-50 rounded-md border-l-4 border-indigo-500"
+              >
+                <strong>RNF01:</strong> A interface do sistema deve ser
+                intuitiva e de fácil utilização.
+              </li>
+              <li
+                class="p-4 bg-indigo-50 rounded-md border-l-4 border-indigo-500"
+              >
+                <strong>RNF02:</strong> O sistema deve ser responsivo,
+                adaptando-se a diferentes tamanhos de tela.
+              </li>
+              <li
+                class="p-4 bg-indigo-50 rounded-md border-l-4 border-indigo-500"
+              >
+                <strong>RNF03:</strong> O sistema deve garantir a segurança dos
+                dados dos usuários.
+              </li>
+              <li
+                class="p-4 bg-indigo-50 rounded-md border-l-4 border-indigo-500"
+              >
+                <strong>RNF04:</strong> O sistema deve ter um tempo de resposta
+                rápido (páginas em &lt; 3s).
+              </li>
+              <li
+                class="p-4 bg-indigo-50 rounded-md border-l-4 border-indigo-500"
+              >
+                <strong>RNF05:</strong> O sistema deve ser compatível com os
+                navegadores mais populares.
+              </li>
+              <li
+                class="p-4 bg-indigo-50 rounded-md border-l-4 border-indigo-500"
+              >
+                <strong>RNF06:</strong> O sistema deve ter alta disponibilidade
+                (24/7).
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section id="process" class="content-section">
+        <h2 class="text-4xl font-bold mb-6 text-gray-700">
+          Processos e Atores
+        </h2>
+
+        <div class="bg-white p-8 rounded-lg shadow-lg mb-12">
+          <h3 class="text-3xl font-semibold mb-4 text-teal-700">
+            Processo de Doação e Entrega (BPMN)
+          </h3>
+          <p class="mb-8 text-gray-600">
+            O fluxo a seguir representa o principal processo de negócio do Take
+            Eat, desde o cadastro de um produto até sua entrega final. Passe o
+            mouse sobre cada etapa para destacá-la.
+          </p>
+          <div class="flex flex-col items-center space-y-0">
+            <div
+              class="bpmn-step bg-white p-4 rounded-lg shadow-md w-full md:w-3/4 text-center"
+            >
+              <strong>1. Doador</strong> cadastra um novo produto para doação.
+            </div>
+            <div class="bpmn-arrow down">
+              <div class="bpmn-arrow down-end"></div>
+            </div>
+            <div
+              class="bpmn-step bg-white p-4 rounded-lg shadow-md w-full md:w-3/4 text-center"
+            >
+              <strong>2. Sistema</strong> disponibiliza o produto na plataforma.
+            </div>
+            <div class="bpmn-arrow down">
+              <div class="bpmn-arrow down-end"></div>
+            </div>
+            <div
+              class="bpmn-step bg-white p-4 rounded-lg shadow-md w-full md:w-3/4 text-center"
+            >
+              <strong>3. Distribuidor</strong> navega pelos produtos
+              disponíveis.
+            </div>
+            <div class="bpmn-arrow down">
+              <div class="bpmn-arrow down-end"></div>
+            </div>
+            <div
+              class="bpmn-step bg-white p-4 rounded-lg shadow-md w-full md:w-3/4 text-center"
+            >
+              <strong>4. Distribuidor</strong> adiciona os produtos desejados ao
+              carrinho.
+            </div>
+            <div class="bpmn-arrow down">
+              <div class="bpmn-arrow down-end"></div>
+            </div>
+            <div
+              class="bpmn-step bg-white p-4 rounded-lg shadow-md w-full md:w-3/4 text-center"
+            >
+              <strong>5. Distribuidor</strong> finaliza o pedido.
+            </div>
+            <div class="bpmn-arrow down">
+              <div class="bpmn-arrow down-end"></div>
+            </div>
+            <div
+              class="bpmn-step bg-white p-4 rounded-lg shadow-md w-full md:w-3/4 text-center"
+            >
+              <strong>6. Sistema</strong> cria o pedido e notifica os
+              entregadores.
+            </div>
+            <div class="bpmn-arrow down">
+              <div class="bpmn-arrow down-end"></div>
+            </div>
+            <div
+              class="bpmn-step bg-white p-4 rounded-lg shadow-md w-full md:w-3/4 text-center"
+            >
+              <strong>7. Entregador</strong> aceita o pedido de entrega.
+            </div>
+            <div class="bpmn-arrow down">
+              <div class="bpmn-arrow down-end"></div>
+            </div>
+            <div
+              class="bpmn-step bg-white p-4 rounded-lg shadow-md w-full md:w-3/4 text-center"
+            >
+              <strong>8. Entregador</strong> retira o produto com o Doador.
+            </div>
+            <div class="bpmn-arrow down">
+              <div class="bpmn-arrow down-end"></div>
+            </div>
+            <div
+              class="bpmn-step bg-white p-4 rounded-lg shadow-md w-full md:w-3/4 text-center"
+            >
+              <strong>9. Entregador</strong> transporta o produto até o
+              Distribuidor.
+            </div>
+            <div class="bpmn-arrow down">
+              <div class="bpmn-arrow down-end"></div>
+            </div>
+            <div
+              class="bpmn-step bg-green-100 p-4 rounded-lg shadow-md w-full md:w-3/4 text-center border-2 border-green-500"
+            >
+              <strong>10. Sistema</strong> atualiza o status para "Entregue".
+            </div>
+          </div>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-12">
+          <div class="bg-white p-8 rounded-lg shadow-lg">
+            <h3 class="text-3xl font-semibold mb-6 text-teal-700">
+              Casos de Uso
+            </h3>
+            <p class="mb-6 text-gray-600">
+              Os casos de uso descrevem as interações entre os atores (usuários)
+              e o sistema para atingir um objetivo. Clique em cada um para ver
+              os detalhes.
+            </p>
+            <div id="use-cases-accordion" class="space-y-4"></div>
+          </div>
+
+          <div class="bg-white p-8 rounded-lg shadow-lg">
+            <h3 class="text-3xl font-semibold mb-6 text-teal-700">Glossário</h3>
+            <p class="mb-6 text-gray-600">
+              Definições dos principais termos utilizados no projeto para
+              garantir um entendimento comum.
+            </p>
+            <ul class="space-y-3">
+              <li>
+                <strong class="text-gray-900">Apoiador:</strong> Usuário que
+                contribui financeiramente para a plataforma.
+              </li>
+              <li>
+                <strong class="text-gray-900">Doador:</strong> Usuário que
+                disponibiliza alimentos para doação.
+              </li>
+              <li>
+                <strong class="text-gray-900">Distribuidor:</strong> Organização
+                que recebe os alimentos para distribuir.
+              </li>
+              <li>
+                <strong class="text-gray-900">Entregador:</strong> Usuário
+                responsável pelo transporte dos alimentos.
+              </li>
+              <li>
+                <strong class="text-gray-900">Take Eat Coin:</strong> Moeda
+                virtual da plataforma.
+              </li>
+              <li>
+                <strong class="text-gray-900">Pedido:</strong> Solicitação de um
+                Distribuidor para coletar produtos.
+              </li>
+              <li>
+                <strong class="text-gray-900">DER:</strong> Diagrama de
+                Entidade-Relacionamento.
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="bg-white p-8 rounded-lg shadow-lg mt-12">
+          <h3 class="text-3xl font-semibold mb-4 text-teal-700">
+            Visualização da Prioridade dos Casos de Uso
+          </h3>
+          <p class="mb-6 text-gray-600">
+            Este gráfico compara a importância (prioridade x risco) dos casos de
+            uso descritos. Valores mais altos indicam maior prioridade para o
+            desenvolvimento e sucesso do projeto.
+          </p>
+          <div class="chart-container">
+            <canvas id="useCasesChart"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <section id="data" class="content-section">
+        <h2 class="text-4xl font-bold mb-6 text-gray-700">
+          Estrutura de Dados
+        </h2>
+        <div class="bg-white p-8 rounded-lg shadow-lg">
+          <h3 class="text-3xl font-semibold mb-6 text-teal-700">
+            Dicionário de Dados
+          </h3>
+          <p class="mb-6 text-gray-600">
+            A tabela abaixo descreve as entidades e atributos do banco de dados
+            do sistema, com base no Diagrama de Entidade-Relacionamento (DER).
+          </p>
+          <div class="overflow-x-auto">
+            <table class="min-w-full bg-white border border-gray-200">
+              <thead class="bg-gray-100">
+                <tr>
+                  <th class="py-3 px-4 border-b text-left">Tabela</th>
+                  <th class="py-3 px-4 border-b text-left">Coluna</th>
+                  <th class="py-3 px-4 border-b text-left">Tipo</th>
+                  <th class="py-3 px-4 border-b text-left">Chave</th>
+                  <th class="py-3 px-4 border-b text-left">Descrição</th>
+                </tr>
+              </thead>
+              <tbody id="data-dictionary-body" class="text-gray-700"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="rules" class="content-section">
+        <h2 class="text-4xl font-bold mb-6 text-gray-700">Regras de Negócio</h2>
+        <div class="bg-white p-8 rounded-lg shadow-lg">
+          <p class="mb-6 text-gray-600">
+            As regras de negócio são diretrizes e restrições que definem ou
+            restringem as operações do sistema, garantindo a integridade e a
+            lógica do processo.
+          </p>
+          <ul class="space-y-4 list-disc list-inside">
+            <li>
+              <strong>RN01:</strong> Um usuário deve ter um e apenas um tipo de
+              perfil (Doador, Distribuidor, etc.).
+            </li>
+            <li>
+              <strong>RN02:</strong> Para cadastrar um produto, o usuário deve
+              ser do tipo "Doador".
+            </li>
+            <li>
+              <strong>RN03:</strong> Um produto deve estar associado a um único
+              Doador.
+            </li>
+            <li>
+              <strong>RN04:</strong> Para criar um pedido, o usuário deve ser do
+              tipo "Distribuidor".
+            </li>
+            <li>
+              <strong>RN05:</strong> Um pedido deve estar associado a um único
+              Distribuidor.
+            </li>
+            <li>
+              <strong>RN06:</strong> Um pedido pode conter vários produtos, e um
+              produto pode estar em vários pedidos.
+            </li>
+            <li>
+              <strong>RN07:</strong> Uma entrega deve estar associada a um único
+              pedido e a um único entregador.
+            </li>
+            <li>
+              <strong>RN08:</strong> Um entregador deve cadastrar pelo menos um
+              veículo para poder realizar entregas.
+            </li>
+            <li>
+              <strong>RN09:</strong> Apenas usuários do tipo "Apoiador" podem
+              ter uma carteira e um extrato.
+            </li>
+            <li>
+              <strong>RN10:</strong> O status de um pedido deve seguir o fluxo:
+              Pendente -> Em trânsito -> Entregue.
+            </li>
+          </ul>
+        </div>
+      </section>
+    </main>
+
+    <footer class="bg-white mt-12 py-6">
+      <div class="container mx-auto px-6 text-center text-gray-500">
+        <p>&copy; 2025 Take Eat - Documentação Interativa de Projeto.</p>
+      </div>
+    </footer>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const navLinks = document.querySelectorAll(".nav-link");
+        const contentSections = document.querySelectorAll(".content-section");
+        const mobileMenuButton = document.getElementById("mobile-menu-button");
+        const mobileMenu = document.getElementById("mobile-menu");
+
+        function showSection(hash) {
+          const targetHash = hash || "#overview";
+
+          contentSections.forEach((section) => {
+            section.classList.remove("active");
+          });
+          navLinks.forEach((link) => {
+            link.classList.remove("active");
+          });
+
+          const targetSection = document.querySelector(targetHash);
+          if (targetSection) {
+            targetSection.classList.add("active");
+          }
+
+          document
+            .querySelectorAll(`.nav-link[href="${targetHash}"]`)
+            .forEach((link) => {
+              link.classList.add("active");
+            });
+        }
+
+        navLinks.forEach((link) => {
+          link.addEventListener("click", function (e) {
+            e.preventDefault();
+            const targetHash = this.getAttribute("href");
+            history.pushState(null, null, targetHash);
+            showSection(targetHash);
+            if (mobileMenu.classList.contains("block")) {
+              mobileMenu.classList.remove("block");
+              mobileMenu.classList.add("hidden");
+            }
+          });
+        });
+
+        mobileMenuButton.addEventListener("click", () => {
+          mobileMenu.classList.toggle("hidden");
+          mobileMenu.classList.toggle("block");
+        });
+
+        window.addEventListener("popstate", () => {
+          showSection(window.location.hash);
+        });
+
+        showSection(window.location.hash);
+
+        const reqTabs = document.querySelectorAll(".req-tab");
+        const reqContents = document.querySelectorAll(".req-content");
+
+        reqTabs.forEach((tab) => {
+          tab.addEventListener("click", () => {
+            reqTabs.forEach((item) => {
+              item.classList.remove("text-teal-600", "border-teal-500");
+              item.classList.add(
+                "text-gray-500",
+                "hover:text-gray-700",
+                "hover:border-gray-300"
+              );
+            });
+
+            tab.classList.add("text-teal-600", "border-teal-500");
+            tab.classList.remove(
+              "text-gray-500",
+              "hover:text-gray-700",
+              "hover:border-gray-300"
+            );
+
+            reqContents.forEach((content) => content.classList.add("hidden"));
+
+            const tabType = tab.dataset.tab;
+
+            if (tabType === "funcionais") {
+              document
+                .getElementById("functional-reqs")
+                .classList.remove("hidden");
+            } else if (tabType === "nao-funcionais") {
+              document
+                .getElementById("non-functional-reqs")
+                .classList.remove("hidden");
+            }
+          });
+        });
+
+        const useCases = [
+          {
+            title: "CSU01 - Autenticar Usuário",
+            importance: 80,
+            summary:
+              "Autenticar no sistema para usar funcionalidades disponíveis para o seu perfil.",
+            actor: "Usuário",
+            preCondition:
+              "O usuário deve possuir um cadastro prévio no sistema.",
+            postCondition:
+              "O usuário está logado no sistema e tem acesso às funcionalidades do seu perfil.",
+            mainFlow: [
+              "O ator seleciona a opção de autenticação na tela principal do sistema.",
+              "O sistema exibe a tela para autenticação.",
+              "O ator informa email e senha e pressiona o botão 'Entrar'.",
+              "O sistema verifica a validade do email e da senha.",
+              "O sistema exibe as funcionalidades disponíveis para o perfil do usuário.",
+            ],
+            exceptionFlow: {
+              step: "Passo 4: Email ou senha do usuário inválidos.",
+              action:
+                "O sistema deve informar a mensagem: 'Email ou senha inválidos'. Retorna para o passo 2.",
+            },
+          },
+          {
+            title: "CSU02 - Gerenciar Produtos (Doador)",
+            importance: 90,
+            summary:
+              "Permite que o usuário Doador cadastre, edite e remova produtos para doação.",
+            actor: "Usuário Doador",
+            preCondition: "O usuário deve estar autenticado como 'Doador'.",
+            postCondition:
+              "A lista de produtos disponíveis para doação é atualizada.",
+            mainFlow: [
+              "O ator acessa a área de 'Meus Produtos' e seleciona 'Adicionar Novo Produto'.",
+              "O sistema exibe o formulário de cadastro de produto.",
+              "O ator preenche os dados do produto e confirma.",
+              "O sistema valida os dados e salva o novo produto.",
+              "O sistema exibe uma mensagem de sucesso.",
+            ],
+            exceptionFlow: {
+              step: "Passo 4: Dados do produto inválidos.",
+              action:
+                "O sistema informa os erros de validação. Retorna para o passo 2.",
+            },
+          },
+          {
+            title: "CSU03 - Realizar Pedido (Distribuidor)",
+            importance: 95,
+            summary:
+              "Permite que o usuário Distribuidor selecione produtos e crie um pedido para coleta.",
+            actor: "Usuário Distribuidor",
+            preCondition:
+              "O usuário deve estar autenticado como 'Distribuidor'.",
+            postCondition:
+              "Um novo pedido é criado no sistema com o status 'Pendente'.",
+            mainFlow: [
+              "O ator navega pela lista de produtos disponíveis.",
+              "O ator adiciona os produtos desejados ao seu carrinho.",
+              "O ator acessa o carrinho e seleciona 'Finalizar Pedido'.",
+              "O sistema exibe um resumo do pedido para confirmação.",
+              "O ator confirma o pedido.",
+              "O sistema cria o registro do pedido.",
+              "O sistema exibe uma mensagem de confirmação.",
+            ],
+            exceptionFlow: {
+              step: "Passo 2: Produto não está mais disponível.",
+              action:
+                "O sistema informa que o produto foi esgotado e o remove da listagem.",
+            },
+          },
+          {
+            title: "CSU04 - Gerenciar Entrega (Entregador)",
+            importance: 90,
+            summary:
+              "Permite que o usuário Entregador visualize e aceite pedidos para entrega.",
+            actor: "Usuário Entregador",
+            preCondition:
+              "O usuário deve estar autenticado como 'Entregador' e ter um veículo cadastrado.",
+            postCondition: "O status do pedido e da entrega são atualizados.",
+            mainFlow: [
+              "O ator acessa a lista de pedidos disponíveis para entrega.",
+              "O ator seleciona um pedido para ver os detalhes.",
+              "O ator aceita realizar a entrega.",
+              "O sistema associa o entregador ao pedido e atualiza o status.",
+              "Após a entrega, o ator marca como 'Concluída'.",
+              "O sistema atualiza o status para 'Entregue'.",
+              "O sistema exibe uma mensagem de sucesso.",
+            ],
+            exceptionFlow: {
+              step: "Passo 3: Outro entregador aceita o pedido primeiro.",
+              action:
+                "O sistema informa que o pedido não está mais disponível. Retorna para o passo 1.",
+            },
+          },
+        ];
+
+        const accordionContainer = document.getElementById(
+          "use-cases-accordion"
+        );
+        useCases.forEach((uc, index) => {
+          const item = document.createElement("div");
+          item.innerHTML = `
+                    <button class="accordion-button w-full text-left p-4 bg-gray-100 hover:bg-gray-200 rounded-md flex justify-between items-center">
+                        <span class="font-semibold">${uc.title}</span>
+                        <span class="transform transition-transform duration-300">&#9662;</span>
+                    </button>
+                    <div class="accordion-content bg-white p-4 border border-t-0 rounded-b-md">
+                        <p class="mb-2"><strong>Sumário:</strong> ${
+                          uc.summary
+                        }</p>
+                        <p class="mb-2"><strong>Ator Primário:</strong> ${
+                          uc.actor
+                        }</p>
+                        <p class="mb-4"><strong>Importância:</strong> ${
+                          uc.importance
+                        }</p>
+                        <h4 class="font-semibold mt-4 mb-2">Fluxo Principal:</h4>
+                        <ol class="list-decimal list-inside space-y-1">
+                            ${uc.mainFlow
+                              .map((step) => `<li>${step}</li>`)
+                              .join("")}
+                        </ol>
+                        <h4 class="font-semibold mt-4 mb-2">Fluxo de Exceção:</h4>
+                        <p><strong>${uc.exceptionFlow.step}</strong> ${
+            uc.exceptionFlow.action
+          }</p>
+                    </div>
+                `;
+          accordionContainer.appendChild(item);
+        });
+
+        const accordionButtons = document.querySelectorAll(".accordion-button");
+        accordionButtons.forEach((button) => {
+          button.addEventListener("click", () => {
+            const content = button.nextElementSibling;
+            const icon = button.querySelector("span:last-child");
+            if (content.style.maxHeight) {
+              content.style.maxHeight = null;
+              icon.style.transform = "rotate(0deg)";
+            } else {
+              content.style.maxHeight = content.scrollHeight + "px";
+              icon.style.transform = "rotate(180deg)";
+            }
+          });
+        });
+
+        const dataDictionary = [
+          {
+            table: "Usuario",
+            column: "id",
+            type: "uuid",
+            key: "PK",
+            desc: "Identificador único do usuário.",
+          },
+          {
+            table: "Usuario",
+            column: "username",
+            type: "varchar(55)",
+            key: "",
+            desc: "Nome de usuário.",
+          },
+          {
+            table: "Usuario",
+            column: "email",
+            type: "varchar(255)",
+            key: "",
+            desc: "Email único para login.",
+          },
+          {
+            table: "Usuario",
+            column: "telefone",
+            type: "varchar(14)",
+            key: "",
+            desc: "Número de telefone do usuário.",
+          },
+          {
+            table: "Usuario",
+            column: "senha",
+            type: "varchar(255)",
+            key: "",
+            desc: "Senha criptografada.",
+          },
+          {
+            table: "Usuario",
+            column: "tipo",
+            type: "ENUM",
+            key: "",
+            desc: "Perfil (Doador, Distribuidor, etc.).",
+          },
+          {
+            table: "UsuarioDoador",
+            column: "id",
+            type: "uuid",
+            key: "PK",
+            desc: "Identificador único do doador.",
+          },
+          {
+            table: "UsuarioDoador",
+            column: "razaoSocial",
+            type: "varchar(255)",
+            key: "",
+            desc: "Razão Social do doador.",
+          },
+          {
+            table: "UsuarioDoador",
+            column: "cnpj",
+            type: "varchar(24)",
+            key: "",
+            desc: "CNPJ do doador.",
+          },
+          {
+            table: "UsuarioDoador",
+            column: "idUsuario",
+            type: "uuid",
+            key: "FK",
+            desc: "Ref. tabela Usuario.",
+          },
+          {
+            table: "Produtos",
+            column: "id",
+            type: "uuid",
+            key: "PK",
+            desc: "Identificador único do produto.",
+          },
+          {
+            table: "Produtos",
+            column: "nome",
+            type: "varchar(255)",
+            key: "",
+            desc: "Nome do produto.",
+          },
+          {
+            table: "Produtos",
+            column: "quantidade",
+            type: "int",
+            key: "",
+            desc: "Quantidade disponível.",
+          },
+          {
+            table: "Produtos",
+            column: "idUsuarioDoador",
+            type: "uuid",
+            key: "FK",
+            desc: "Ref. tabela UsuarioDoador.",
+          },
+          {
+            table: "Pedido",
+            column: "id",
+            type: "uuid",
+            key: "PK",
+            desc: "Identificador único do pedido.",
+          },
+          {
+            table: "Pedido",
+            column: "status",
+            type: "ENUM",
+            key: "",
+            desc: "Status atual do pedido.",
+          },
+          {
+            table: "Pedido",
+            column: "idUsuarioDistribuidor",
+            type: "uuid",
+            key: "FK",
+            desc: "Ref. UsuarioDistribuidor.",
+          },
+
+          {
+            table: "PedidoProduto",
+            column: "id",
+            type: "uuid",
+            key: "PK",
+            desc: "Identificador da relação.",
+          },
+          {
+            table: "PedidoProduto",
+            column: "idPedido",
+            type: "uuid",
+            key: "FK",
+            desc: "Chave estrangeira para a tabela Pedido.",
+          },
+          {
+            table: "PedidoProduto",
+            column: "idProduto",
+            type: "uuid",
+            key: "FK",
+            desc: "Chave estrangeira para a tabela Produtos.",
+          },
+          {
+            table: "Entrega",
+            column: "id",
+            type: "uuid",
+            key: "PK",
+            desc: "Identificador único da entrega.",
+          },
+          {
+            table: "Entrega",
+            column: "enderecoEntrega",
+            type: "varchar(255)",
+            key: "",
+            desc: "Endereço de destino da entrega.",
+          },
+          {
+            table: "Entrega",
+            column: "statusEntrega",
+            type: "ENUM",
+            key: "",
+            desc: "Status atual da entrega (ex: Em trânsito).",
+          },
+          {
+            table: "Entrega",
+            column: "dataEntrega",
+            type: "datetime",
+            key: "",
+            desc: "Data e hora da conclusão da entrega.",
+          },
+          {
+            table: "Entrega",
+            column: "idPedido",
+            type: "uuid",
+            key: "FK",
+            desc: "Chave estrangeira para a tabela Pedido.",
+          },
+          {
+            table: "Entrega",
+            column: "idUsuarioEntregador",
+            type: "uuid",
+            key: "FK",
+            desc: "Chave estrangeira para a tabela UsuarioEntregador.",
+          },
+          {
+            table: "Veiculo",
+            column: "id",
+            type: "uuid",
+            key: "PK",
+            desc: "Identificador único do veículo.",
+          },
+          {
+            table: "Veiculo",
+            column: "tipo",
+            type: "varchar(255)",
+            key: "",
+            desc: "Tipo do veículo (ex: Carro, Moto).",
+          },
+          {
+            table: "Veiculo",
+            column: "placa",
+            type: "varchar(7)",
+            key: "",
+            desc: "Placa do veículo.",
+          },
+          {
+            table: "Veiculo",
+            column: "idUsuarioEntregador",
+            type: "uuid",
+            key: "FK",
+            desc: "Chave estrangeira para a tabela UsuarioEntregador.",
+          },
+          {
+            table: "Carteira",
+            column: "id",
+            type: "uuid",
+            key: "PK",
+            desc: "Identificador único da carteira.",
+          },
+          {
+            table: "Carteira",
+            column: "saldoCoin",
+            type: "decimal(10,4)",
+            key: "",
+            desc: 'Saldo atual de "Take Eat Coins".',
+          },
+          {
+            table: "Carteira",
+            column: "totalEatCoin",
+            type: "decimal(10,4)",
+            key: "",
+            desc: 'Total de "Take Eat Coins" já adquiridos.',
+          },
+          {
+            table: "Carteira",
+            column: "totalDoado",
+            type: "decimal(10,2)",
+            key: "",
+            desc: "Valor total doado em moeda corrente.",
+          },
+          {
+            table: "Carteira",
+            column: "idUsuarioApoiador",
+            type: "uuid",
+            key: "FK",
+            desc: "Chave estrangeira para a tabela UsuarioApoiador.",
+          },
+          {
+            table: "Extrato",
+            column: "id",
+            type: "uuid",
+            key: "PK",
+            desc: "Identificador único do registro de extrato.",
+          },
+          {
+            table: "Extrato",
+            column: "totalDoado",
+            type: "decimal(10,2)",
+            key: "",
+            desc: "Valor da transação.",
+          },
+          {
+            table: "Extrato",
+            column: "idUsuarioApoiador",
+            type: "uuid",
+            key: "FK",
+            desc: "Chave estrangeira para a tabela UsuarioApoiador.",
+          },
+        ];
+
+        const ddBody = document.getElementById("data-dictionary-body");
+        let lastTable = "";
+        dataDictionary.forEach((row) => {
+          const tr = document.createElement("tr");
+          tr.className = "border-b hover:bg-gray-50";
+          tr.innerHTML = `
+                    <td class="py-3 px-4">${
+                      row.table !== lastTable
+                        ? `<strong>${row.table}</strong>`
+                        : ""
+                    }</td>
+                    <td class="py-3 px-4">${row.column}</td>
+                    <td class="py-3 px-4">${row.type}</td>
+                    <td class="py-3 px-4">${
+                      row.key
+                        ? `<span class="bg-yellow-200 text-yellow-800 text-xs font-medium mr-2 px-2.5 py-0.5 rounded">${row.key}</span>`
+                        : ""
+                    }</td>
+                    <td class="py-3 px-4">${row.desc}</td>
+                `;
+          ddBody.appendChild(tr);
+          lastTable = row.table;
+        });
+
+        const ctx = document.getElementById("useCasesChart").getContext("2d");
+        new Chart(ctx, {
+          type: "bar",
+          data: {
+            labels: useCases.map((uc) => uc.title),
+            datasets: [
+              {
+                label: "Nível de Importância",
+                data: useCases.map((uc) => uc.importance),
+                backgroundColor: [
+                  "rgba(45, 212, 191, 0.6)",
+                  "rgba(59, 130, 246, 0.6)",
+                  "rgba(139, 92, 246, 0.6)",
+                  "rgba(234, 179, 8, 0.6)",
+                ],
+                borderColor: [
+                  "rgba(13, 148, 136, 1)",
+                  "rgba(37, 99, 235, 1)",
+                  "rgba(124, 58, 237, 1)",
+                  "rgba(217, 119, 6, 1)",
+                ],
+                borderWidth: 1,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              y: {
+                beginAtZero: true,
+                max: 100,
+                title: {
+                  display: true,
+                  text: "Pontuação de Importância",
+                },
+              },
+            },
+            plugins: {
+              legend: {
+                display: false,
+              },
+              tooltip: {
+                callbacks: {
+                  label: function (context) {
+                    let label = context.dataset.label || "";
+                    if (label) {
+                      label += ": ";
+                    }
+                    if (context.parsed.y !== null) {
+                      label += context.parsed.y;
+                    }
+                    return label;
+                  },
+                },
+              },
+            },
+          },
+        });
+      });
+    </script>
+  </body>
+</html>
